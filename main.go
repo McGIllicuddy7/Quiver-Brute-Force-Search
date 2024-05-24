@@ -31,16 +31,20 @@ func reached_contains(reached *[]Quiver, quiv Quiver) bool {
 	}
 	return false
 }
-func GreedyReduction(quiv Quiver, reached *[]Quiver) (Quiver, error) {
+func GreedyReduction(quiv Quiver, reached *[]Quiver, is_initial bool) (Quiver, int, error) {
 	*reached = append(*reached, quiv)
 	mutation_targets := make([]int, 0)
 	min := 2147483647
 	quivm := quiv.ToMatrix()
-	autopsy.Store(fmt.Sprintf("staring matrix:\n%s\n", quivm.ToString()))
-	autopsy.Store(fmt.Sprintf("starting cost: %d\n", Cost(quiv)))
+	if is_initial {
+		autopsy.Store(fmt.Sprintf("staring matrix:\n%s\n", quivm.ToString()))
+		autopsy.Store(fmt.Sprintf("starting cost: %d\n", Cost(quiv)))
+	}
+
 	for i := 0; i < 4; i++ {
 		m := Cost(quiv.MutateAt(i))
-		autopsy.Store(fmt.Sprintf("index: %d, cost: %d", i, m))
+
+		//autopsy.Store(fmt.Sprintf("index: %d, cost: %d", i, m))
 		if m == min {
 			mutation_targets = append(mutation_targets, i)
 		}
@@ -50,10 +54,10 @@ func GreedyReduction(quiv Quiver, reached *[]Quiver) (Quiver, error) {
 			mutation_targets = append(mutation_targets, i)
 		}
 	}
-	if min > Cost(quiv) {
-		s := quiv.ToMatrix()
-		autopsy.Store(s.ToString())
-		return quiv, nil
+	if min >= Cost(quiv) {
+		//s := quiv.ToMatrix()
+		//autopsy.Store(s.ToString())
+		return quiv, 1, nil
 	}
 	var old Quiver
 	hit := false
@@ -62,9 +66,9 @@ func GreedyReduction(quiv Quiver, reached *[]Quiver) (Quiver, error) {
 		if reached_contains(reached, q) {
 			continue
 		}
-		tmp, err := GreedyReduction(q, reached)
+		tmp, cst, err := GreedyReduction(q, reached, false)
 		if err != nil {
-			return tmp, err
+			return tmp, cst + 1, err
 		}
 		if hit {
 			l := old.ToMatrix()
@@ -73,7 +77,7 @@ func GreedyReduction(quiv Quiver, reached *[]Quiver) (Quiver, error) {
 				autopsy.Store(fmt.Sprintf("not equal\n%s\n%s\n", l.ToString(), v.ToString()))
 				autopsy.Store(fmt.Sprint("l mutations: ", print_int_slice(tmp.mutations)))
 				autopsy.Store(fmt.Sprint("v mutations: ", print_int_slice(old.mutations)))
-				return old, errors.New("not equal quivers")
+				return old, cst + 1, errors.New("not equal quivers")
 			}
 		}
 		old = tmp
@@ -82,28 +86,28 @@ func GreedyReduction(quiv Quiver, reached *[]Quiver) (Quiver, error) {
 	if !hit {
 		s := quiv.ToMatrix()
 		autopsy.Store(s.ToString())
-		return quiv, nil
+		return quiv, 1, nil
 	}
-	return old, nil
+	return old, 1, nil
 }
 func main() {
 	autopsy.Init()
-	for i := 1; i < 1000; i++ {
-		for j := 0; j < i*100; j++ {
+	//min := 0
+	for i := 1; i < 100; i++ {
+		for j := 0; j < (i)*10000; j++ {
 			reached := make([]Quiver, 0)
 			//recursed = false
 			autopsy.Reset()
-			q := RandomQuiver(4, i+2)
-			m := q.ToMatrix()
-			_, err := GreedyReduction(q, &reached)
+			q := RandomQuiverHighCost(4, i+2)
+			_, _, err := GreedyReduction(q, &reached, true)
 			if err != nil {
-				println(err.Error())
-				println("counter example:\n")
-				println(m.ToString())
+				//min = cst
+				//fmt.Fprintln(os.Stdout, os.Stdout, err.Error())
+				//fmt.Fprintln(os.Stdout, "counter example:\n")
+				//fmt.Fprintln(os.Stdout, m.ToString())
 				autopsy.Dump()
-				os.Exit(1)
+				fmt.Fprintln(os.Stdout, "done\n")
 			}
-
 		}
 		println(i)
 	}

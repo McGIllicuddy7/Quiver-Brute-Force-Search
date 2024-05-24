@@ -60,6 +60,27 @@ func RandomQuiver(dim int, max int) Quiver {
 	return out
 }
 
+func RandomQuiverHighCost(dim int, max int) Quiver {
+	out := Quiver{make([]vertex_t, dim), dim, make([]int, 0)}
+	for i := 0; i < dim; i++ {
+		for j := 0; j < dim; j++ {
+			if j == i {
+				continue
+			}
+			r := rand.Int()%(max*2) - max
+			if r > -2 && r < 2 {
+				if r == 0 {
+					r += (rand.Int()%2)*2 - 1
+				}
+				r *= 2
+			}
+			out.points[i].edges[j] = r
+			out.points[j].edges[i] = -r
+		}
+	}
+	return out
+}
+
 type vertx struct {
 	edges []int
 	used  bool

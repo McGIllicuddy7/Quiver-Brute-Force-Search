@@ -2,6 +2,7 @@ package autopsy
 
 import (
 	"fmt"
+	"os"
 	"sync/atomic"
 )
 
@@ -37,7 +38,7 @@ func Store(msg string) {
 }
 func Dump() {
 	for i := 0; i < len(aut.info); i++ {
-		fmt.Printf("%s\n", aut.info[i])
+		fmt.Fprintf(os.Stdout, "%s\n", aut.info[i])
 	}
 	clear(aut.info)
 }
